@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>حجز موعد - مخيم مكان</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #0d1b2a;
+      position: relative;
+      padding: 0;
+      margin: 0;
+      direction: rtl;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 600px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      position: relative;
+      z-index: 2;
+      margin-top: 20px;
+      margin-bottom: 30px;
+      color: #000;
+    }
+
+    #logo {
+      text-align: center;
+      padding: 15px 0;
+    }
+
+    #logo img {
+      width: auto;
+      max-width: 160px;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #000;
+      font-size: 24px;
+      font-weight: bold;
+      line-height: 1.3;
+    }
+
+    .container p {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #000;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      color: #000;
+      font-size: 15px;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #999;
+      border-radius: 8px;
+      font-size: 16px;
+      background: #fff;
+      color: #000;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 17px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #333;
+    }
+    .error {
+      color: #d32f2f;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    .info {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #000;
+      border: 1px solid #ddd;
+    }
+    .loading {
+      text-align: center;
+      color: #000;
+      font-style: italic;
+      font-size: 15px;
+    }
+
+    .qr-section {
+      text-align: center;
+      margin-top: 25px;
+      color: #000;
+    }
+    .qr-section button {
+      background: #2c5e3e;
+      color: white;
+      padding: 11px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #qrCode {
+      margin-top: 15px;
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 20px; margin-top: 10px; }
+      h1 { font-size: 22px; }
+      input, select, button { font-size: 17px; }
+    }
+    @media (min-width: 768px) {
+      .container { padding: 30px; margin-top: 30px; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="canvas-bg"></canvas>
+
+  <div class="container">
+    <div id="logo">
+      <img src="c:\Users\AMT\Downloads\IMG_3513.jpg" alt="لوجو مخيم مكان">
+    </div>
+
+    <h1>حجز موعد في مخيم "مكان"</h1>
+    <p>
+         <strong>    </strong>
+    </p>
+
+    <form id="bookingForm">
+      <div class="form-group">
+        <label for="fullName">الاسم الكامل:</label>
+        <input type="text" id="fullName" name="fullName" required />
+        <div class="error" id="fullNameError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">رقم الهاتف        :</label>
+        <input type="tel" id="phone" name="phone" required placeholder="91234567 أو 78901234" />
+        <div class="error" id="phoneError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="location">الموقع (المدينة/المنطقة):</label>
+        <input type="text" id="location" name="location" required />
+        <div class="error" id="locationError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="date">تاريخ الحجز:</label>
+        <input type="date" id="date" name="date" required />
+        <div class="info" id="dateStatus">اختر تاريخًا للتحقق من التوفر</div>
+        <div class="error" id="dateError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="timeSlot">اختر الفترة:</label>
+        <select id="timeSlot" name="timeSlot" required>
+          <option value="">اختر الفترة</option>
+          <option value="الصباح (7:00 ص - 12:00 ظ)">الصباح (7:00  - 12:00 )</option>
+          <option value="المساء (4:00 م - 12:00 ص)">المساء (4:00  - 12:00 )</option>
+        </select>
+        <div class="error" id="timeError"></div>
+      </div>
+
+      <button type="submit" id="submitBtn">تأكيد الحجز</button>
+      <div class="loading" id="loading" style="display:none;">جارٍ التحقق من التوفر...</div>
+    </form>
+
+    <div class="qr-section">
+      <button onclick="showQR()">📲 شارك عبر رمز QR</button>
+      <div id="qrCode"></div>
+    </div>
+  </div>
+
+  <!-- الخلفية المتحركة -->
+  <script>
+    const canvas = document.getElementById('canvas-bg');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+
+    const particles = [];
+    const particleCount = window.innerWidth < 768 ? 40 : 80;
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 1.8 + 0.3;
+        this.speedX = Math.random() * 0.8 - 0.4;
+        this.speedY = Math.random() * 0.8 - 0.4;
+        this.color = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`;
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+        if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+      }
+      draw() {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function animate() {
+      ctx.fillStyle = 'rgba(13, 27, 42, 0.12)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    window.addEventListener('resize', resizeCanvas);
+  </script>
+
+  <!-- QR Code -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    function showQR() {
+      const url = window.location.href;
+      const qrContainer = document.getElementById('qrCode');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: url,
+        width: 150,
+        height: 150,
+        colorDark: '#000',
+        colorLight: '#fff'
+      });
+    }
+  </script>
+
+  <!-- Firebase + منطق الحجز -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwudkdBX1Ad7e27WnPzUzNYr5Ba9vuBQQ",
+      authDomain: "mukhayam-makan.firebaseapp.com",
+      projectId: "mukhayam-makan",
+      storageBucket: "mukhayam-makan.firebasestorage.app",
+      messagingSenderId: "847036539994",
+      appId: "1:847036539994:web:5edf07b5cbc3e7fe5f2463",
+      measurementId: "G-WLZF8Z9BPB"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    document.getElementById('date').min = new Date().toISOString().split('T')[0];
+
+    document.getElementById('date').addEventListener('change', async function() {
+      const date = this.value;
+      const statusEl = document.getElementById('dateStatus');
+      if (!date) {
+        statusEl.textContent = 'اختر تاريخًا للتحقق من التوفر';
+        statusEl.style.backgroundColor = '#f0f0f0';
+        statusEl.style.color = '#000';
+        return;
+      }
+      document.getElementById('loading').style.display = 'block';
+      const doc = await db.collection('bookings').doc(date).get();
+      document.getElementById('loading').style.display = 'none';
+      if (doc.exists) {
+        statusEl.textContent = '❌ هذا التاريخ محجوز بالفعل!';
+        statusEl.style.backgroundColor = '#ffebee';
+        statusEl.style.color = '#000';
+      } else {
+        statusEl.textContent = '✅ هذا التاريخ متاح للحجز';
+        statusEl.style.backgroundColor = '#e8f5e9';
+        statusEl.style.color = '#000';
+      }
+    });
+
+    document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      document.querySelectorAll('.error').forEach(el => el.textContent = '');
+
+      const name = document.getElementById('fullName').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const date = document.getElementById('date').value;
+      const timeSlot = document.getElementById('timeSlot').value;
+
+      let valid = true;
+      if (!name) { document.getElementById('fullNameError').textContent = 'الاسم مطلوب'; valid = false; }
+      if (!phone || !/^[79]\d{7}$/.test(phone)) {
+        document.getElementById('phoneError').textContent = 'رقم هاتف غير صحيح (يبدأ بـ 9 أو 7 و8 أرقام)';
+        valid = false;
+      }
+      if (!location) { document.getElementById('locationError').textContent = 'الموقع مطلوب'; valid = false; }
+      if (!date) { document.getElementById('dateError').textContent = 'اختر تاريخًا'; valid = false; }
+      if (!timeSlot) { document.getElementById('timeError').textContent = 'اختر الفترة'; valid = false; }
+
+      if (!valid) return;
+
+      const docRef = db.collection('bookings').doc(date);
+      const docSnap = await docRef.get();
+      if (docSnap.exists) {
+        alert('❌ تم حجز هذا التاريخ لتوه! اختر تاريخًا آخر.');
+        return;
+      }
+
+      // === ✅ إنشاء رمز إلغاء فريد ===
+      const cancelCode = Math.random().toString(36).substring(2, 10);
+
+      await docRef.set({
+        fullName: name,
+        phone: phone,
+        location: location,
+        time: timeSlot,
+        cancelCode: cancelCode, // ← محفوظ للإلغاء لاحقًا
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // === ✅ رابط الإلغاء (يجب أن يكون دومينك بعد النشر) ===
+      const YOUR_SITE_URL = "https://mukhayam-makan.web.app"; // ← غيّره بعد النشر!
+      const cancelUrl = `${YOUR_SITE_URL}/cancel.html?code=${cancelCode}`;
+
+      const message = `مرحباً! ${name}\n✅ تم حجز موعد في مخيم "مكان"!\n📅 التاريخ: ${date}\n⏰ الفترة: ${timeSlot}\n📱 الجوال: ${phone}\n📍 الموقع: ${location}\n\n❌ لإلغاء الحجز، اضغط هنا:\n${cancelUrl}`;
+      const encodedMessage = encodeURIComponent(message);
+      const campWhatsApp = '96878421613';
+      window.open(`https://wa.me/${campWhatsApp}?text=${encodedMessage}`, '_blank');
+
+      this.reset();
+      document.getElementById('dateStatus').textContent = 'اختر تاريخًا للتحقق من التوفر';
+      document.getElementById('dateStatus').style.backgroundColor = '#f0f0f0';
+      document.getElementById('dateStatus').style.color = '#000';
+    });
+  </script>
+</body>
+</html>
