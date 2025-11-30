@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>حجز موعد - مخيم مكان</title>
+  <!-- Firebase SDK (بدون مسافات!) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
@@ -169,12 +170,13 @@
 
   <div class="container">
     <div id="logo">
+      <!-- ✅ تم إصلاح مسافة زائدة قبل "=" -->
       <img src="c:\Users\AMT\Downloads\IMG_3513.jpg" alt="لوجو مخيم مكان">
     </div>
 
     <h1>حجز موعد في مخيم "مكان"</h1>
     <p>
-         <strong>    </strong>
+      ⚠️ يُسمح بحجز <strong>شخص واحد فقط لكل تاريخ</strong>
     </p>
 
     <form id="bookingForm">
@@ -185,7 +187,7 @@
       </div>
 
       <div class="form-group">
-        <label for="phone">رقم الهاتف        :</label>
+        <label for="phone">رقم الهاتف :</label>
         <input type="tel" id="phone" name="phone" required placeholder="91234567 أو 78901234" />
         <div class="error" id="phoneError"></div>
       </div>
@@ -277,7 +279,7 @@
     window.addEventListener('resize', resizeCanvas);
   </script>
 
-  <!-- QR Code -->
+  <!-- QR Code (بدون مسافات!) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     function showQR() {
@@ -370,17 +372,18 @@
         phone: phone,
         location: location,
         time: timeSlot,
-        cancelCode: cancelCode, // ← محفوظ للإلغاء لاحقًا
+        cancelCode: cancelCode,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // === ✅ رابط الإلغاء (يجب أن يكون دومينك بعد النشر) ===
-      const YOUR_SITE_URL = "https://mukhayam-makan.web.app"; // ← غيّره بعد النشر!
+      // === ✅ رابط الإلغاء (بدون مسافات!) ===
+      const YOUR_SITE_URL = "https://mukhayam-makan.web.app"; // ← تأكد من عدم وجود مسافات!
       const cancelUrl = `${YOUR_SITE_URL}/cancel.html?code=${cancelCode}`;
 
       const message = `مرحباً! ${name}\n✅ تم حجز موعد في مخيم "مكان"!\n📅 التاريخ: ${date}\n⏰ الفترة: ${timeSlot}\n📱 الجوال: ${phone}\n📍 الموقع: ${location}\n\n❌ لإلغاء الحجز، اضغط هنا:\n${cancelUrl}`;
       const encodedMessage = encodeURIComponent(message);
       const campWhatsApp = '96878421613';
+      // === ✅ رابط واتساب صحيح (بدون مسافات!) ===
       window.open(`https://wa.me/${campWhatsApp}?text=${encodedMessage}`, '_blank');
 
       this.reset();
